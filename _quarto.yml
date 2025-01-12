@@ -1,0 +1,37 @@
+project:
+  type: book
+  output-dir: "../docs"
+
+
+book:
+  title: "Análisis integrado"
+  author: "Gisarte"
+  date: "2024-11-25"
+  # date-format: "%Y, %m, %d"
+  chapters:
+    - index.qmd
+    - part: "ASPECTOS GENERALES"
+      chapters:
+        - 10-Ejemplo.qmd
+    # Añade más capítulos según sea necesario
+
+format:
+  html:
+    css: custom.css
+    theme: flatly
+    toc: true
+    toc-depth: 2
+    number-sections: true
+
+editor: source  
+ 
+lang: es
+language:
+  en:
+    toc-title-document: "Table of contents"
+    title-block-author-single: "Author"
+    title-block-author-plural: "Authors"
+  es:
+    toc-title-document: "Tabla de contenidos"
+    title-block-author-single: "Autor"
+    title-block-author-plural: "Autores"

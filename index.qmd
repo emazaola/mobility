@@ -1,0 +1,32 @@
+---
+title: "Análisis integrado"
+author: "Gisarte"
+format:
+  html:
+    theme: flatly
+    toc: true
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+# Bienvenida {.unnumbered}
+
+Bienvenido a este libro sobre la mobilidad. En
+las siguientes páginas, exploraremos...
+
+## Objetivos del libro
+
+-   Crear un documento que abarque los contenidos de teledetección que
+    se han trabajado estos años
+-   Agrupar los scripts creados en R para desarrollar los casos
+    estudiados
+-   Aprender a usar quarto, Git y Github
+
+## Estructura del libro
+
+Este libro está organizado en los siguientes capítulos:
+
+1.  ASPECTOS GENERALES
+
+   
