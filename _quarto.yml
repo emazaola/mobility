@@ -13,6 +13,7 @@ book:
     - part: "ASPECTOS GENERALES"
       chapters:
         - 10-Ejemplo.qmd
+        - 11-Ejemplo_vitoria.qmd
     # Añade más capítulos según sea necesario
 
 format:
