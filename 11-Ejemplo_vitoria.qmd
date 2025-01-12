@@ -77,93 +77,46 @@ head(districts_v1_coords)
 
 ## Gráfico de los flujos
 
-```{r}
-# create base ggplot with boundaries removing various visual clutter
-base_plot_districts <- ggplot() +
-  geom_sf(data = districts_v1, fill=NA, col = "grey60", linewidth = 0.05)+
-  theme_classic(base_size = 20) +
-  labs(title = "",
-    subtitle = "", fill = "", caption = "") +
-  theme(
-    axis.line = element_blank(),
-    axis.text = element_blank(),
-    axis.ticks = element_blank(),
-    axis.title = element_blank(),
-    panel.background = element_rect(fill='transparent'),
-    plot.background = element_rect(fill='transparent', color=NA),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank()
-  ) +
-  guides(fill = "none")
-
-# flows_by_ca_twoway_coords |> arrange(desc(flow_ab))
-# add the flows
-flows_plot_all_districts <- base_plot_districts |>
-  add_flowmap(
-    od = od_20210407_total,
-    nodes = districts_v1_coords,
-    node_radius_factor = 1,
-    edge_width_factor = 1,
-    arrow_point_angle = 35,
-    node_buffer_factor = 1.5,
-    outline_col = "grey80",
-    add_legend = "bottom",
-    legend_col = "gray20",
-    legend_gradient = TRUE,
-    k_node = 20 # play around with this parameter to aggregate nodes and flows
-  )
-
-# customise colours for the fill
-flows_plot_all_districts <- flows_plot_all_districts +
-  scale_fill_gradient(
-    low = "#FABB29", 
-    high = "#AB061F", 
-    labels = scales::comma_format()  # Real value labels
-  )
-
-
-flows_plot_all_districts
-```
 
 ## City level
 
 ```{r}
-zones_barcelona <- districts_v1 |>
-  filter(grepl("Barcelona", district_names_in_v2, ignore.case = TRUE))
+zones_araba <- districts_v1 |>
+  filter(grepl("Vitoria", district_names_in_v2, ignore.case = TRUE))
 
-zones_barcelona_fua <- districts_v1[
-  st_buffer(zones_barcelona, dist = 10000)
+zones_zones_araba_fua <- districts_v1[
+  st_buffer(zones_araba, dist = 10000)
   ,
 ]
 
-zones_barcelona_fua_plot <- ggplot() +
-  geom_sf(data = zones_barcelona_fua, fill=NA, col = "grey60", linewidth = 0.3) +
+zones_zones_araba_fua_plot <- ggplot() +
+  geom_sf(data = zones_zones_araba_fua, fill=NA, col = "grey60", linewidth = 0.3) +
   theme_minimal()
 
-zones_barcelona_fua_plot
+zones_zones_araba_fua_plot
 ```
 
 ```{r}
-zones_barcelona_fua_coords <- zones_barcelona_fua |>
+zones_zones_araba_fua_coords <- zones_zones_araba_fua |>
   st_centroid() |>
   st_coordinates() |>
   as.data.frame() |>
-  mutate(name = zones_barcelona_fua$id) |>
+  mutate(name = zones_zones_araba_fua$id) |>
   rename(x = X, y = Y)
 
-head(zones_barcelona_fua_coords)
+head(zones_zones_araba_fua_coords)
 ```
 
 ```{r}
-od_20210407_total_barcelona <- od_20210407_total |>
-  filter(o %in% zones_barcelona_fua$id & d %in% zones_barcelona_fua$id)
+od_20210407_total_zones_araba <- od_20210407_total |>
+  filter(o %in% zones_zones_araba_fua$id & d %in% zones_zones_araba_fua$id)
 ```
 
 
 ```{r}
 # create base ggplot with boundaries removing various visual clutter
-base_plot_barcelona <- ggplot() +
-  geom_sf(data = zones_barcelona_fua, fill=NA, col = "grey60", linewidth = 0.05)+
+base_plot_zones_araba <- ggplot() +
+  geom_sf(data = zones_zones_araba_fua, fill=NA, col = "grey60", linewidth = 0.05)+
   theme_classic(base_size = 20) +
   labs(title = "",
     subtitle = "", fill = "", caption = "") +
@@ -181,10 +134,10 @@ base_plot_barcelona <- ggplot() +
 
 # flows_by_ca_twoway_coords |> arrange(desc(flow_ab))
 # add the flows
-flows_plot_barcelona <- base_plot_barcelona |>
+flows_plot_zones_araba <- base_plot_zones_araba |>
   add_flowmap(
-    od = od_20210407_total_barcelona,
-    nodes = zones_barcelona_fua_coords,
+    od = od_20210407_total_zones_araba,
+    nodes = zones_zones_araba_fua_coords,
     node_radius_factor = 1,
     edge_width_factor = 0.6,
     arrow_point_angle = 45,
@@ -193,11 +146,11 @@ flows_plot_barcelona <- base_plot_barcelona |>
     add_legend = "bottom",
     legend_col = "gray20",
     legend_gradient = TRUE,
-    k_node = 30 # play around with this parameter to aggregate nodes and flows
+    k_node = 18 # play around with this parameter to aggregate nodes and flows
   )
 
 # customise colours for the fill
-flows_plot_barcelona <- flows_plot_barcelona +
+flows_plot_zones_araba <- flows_plot_zones_araba +
   scale_fill_gradient(
     low = "#FABB29", 
     high = "#AB061F", 
@@ -205,7 +158,7 @@ flows_plot_barcelona <- flows_plot_barcelona +
   )
 
 
-flows_plot_barcelona
+flows_plot_zones_araba
 ```
 
 
