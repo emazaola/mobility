@@ -1,7 +1,10 @@
 # Ejemplo
 
-## Configuración
+## Webs
 
+[spanishoddata: Get Spanish Origin-Destination Data](https://ropenspain.github.io/spanishoddata/)
+
+## Configuración
 
 ### Install the package
 
@@ -20,16 +23,24 @@ library(sf)
 ```
 
 ### Data directory
+
 ```{r}
 spod_set_data_dir(data_dir = "../spanish_od_data/")
 ```
 
 
+```{r}
+metadata <- spod_available_data(ver = 2) # for version 2 of the data
+metadata
+```
+
 ## Ejemplo simple
+
 
 ### Obtención de datos
 
 #### Flujos
+
 Flujos entre 2 distritos para un día laborable: 2021-04-07.
 
 ```{r}
@@ -40,8 +51,7 @@ head(od_20210407)
 
 #### Zonas
 
-Es versión 1 porque los datos son de 2021.
-La versión 2 es a partir d enero 2022
+Es versión 1 porque los datos son de 2021. La versión 2 es a partir d enero 2022
 
 ```{r}
 districts_v1 <- spod_get_zones("dist", ver = 1)
@@ -57,12 +67,9 @@ od_20210407_total <- od_20210407 |>
   arrange(o, d, value)
 ```
 
-
 ```{r}
 head(od_20210407_total)
 ```
-
-
 
 ```{r}
 districts_v1_coords <- districts_v1 |>
@@ -159,7 +166,6 @@ od_20210407_total_barcelona <- od_20210407_total |>
   filter(o %in% zones_barcelona_fua$id & d %in% zones_barcelona_fua$id)
 ```
 
-
 ```{r}
 # create base ggplot with boundaries removing various visual clutter
 base_plot_barcelona <- ggplot() +
@@ -207,14 +213,3 @@ flows_plot_barcelona <- flows_plot_barcelona +
 
 flows_plot_barcelona
 ```
-
-
-
-
-
-
-
-
-
-
-
