@@ -1,0 +1,277 @@
+---
+title: "Modelo descarga ZBE"
+author: "GISARTE"
+---
+
+## 1. Recursos
+
+Dirección General de Tráfico: [DGT](https://nap.dgt.es/).
+
+Zonas de Bajas Emisiones: [ZBE](https://nap.dgt.es/dataset/zonas-de-bajas-emisiones).
+
+## 2. Cargar librerías
+
+```{r}
+library(rvest)
+library(dplyr)
+library(stringr)
+library(purrr)
+
+library(xml2)
+library(sf)
+library(here)
+library(mapview)
+```
+
+## 3. Zonas de Bajas Emisiones de la DGT
+
+```{r}
+# Lista copiada de la web de la DGT
+zbe_list <- c("ZBE A CoruñaDATEX2 v3", 
+"ZBE Molina de SeguraDATEX2 v3", 
+"ZBE Sevilla-CartujaDATEX2 v3", 
+"ZBE Pamplona EnsancheDATEX2 v3",
+"ZBE MálagaDATEX2 v3",  
+"ZBE PalmaDATEX2 v3", 
+"ZBE ÁvilaDATEX2 v3" ,
+"ZBE SalamancaDATEX2 v3", 
+"ZBE TorremolinosDATEX2 v3" ,
+"ZBE FuenlabradaDATEX2 v3",  
+"ZBE Rondas de BarcelonaDATEX2 v3" ,
+"ZBE ViladecansDATEX2 v3" ,
+"ZBE Sant Joan DespíDATEX2 v3" ,
+"ZBE GavàDATEX2 v3" ,
+"ZBE CastellónDATEX2 v3"  ,
+"ZBE GranollersDATEX2 v3" ,
+"ZBE ValladolidDATEX2 v3" ,
+"ZBE Donostia - San SebastiánDATEX2 v3" ,
+"ZBE GranadaDATEX2 v3" ,
+"ZBE El Prat de LlobregatDATEX2 v3" ,
+"ZBE Las RozasDATEX2 v3"  ,
+"ZBE Cerdanyola del VallèsDATEX2 v3" ,
+"ZBE Sant Boi de LlobregatDATEX2 v3" ,
+"ZBE Sant Cugat Del VallèsDATEX2 v3" ,
+"ZBE MadridDATEX2 v3", 
+"ZBE CartagenaDATEX2 v3",
+"ZBE BenidormDATEX2v3" ,
+"ZBE PontevedraDATEX2V3", 
+"ZBE BilbaoDATEX2 v3" ,
+"ZBE Vitoria-GasteizDATEX2 v3" ,
+"ZBE Dos HermanasDATEX2 v3",
+"ZBE SabadellDATEX2 v3" ,
+"ZBE OviedoDATEX2 v3" ,
+"ZBE Alcalá de HenaresDATEX2 v3" ,
+"ZBE MotrilDATEX2 v3" ,
+"ZBE LleidaDATEX2 v3" ,
+"ZBE ReusDATEX2 v3" ,
+"ZBE ManlleuDATEX2 v3" ,
+"ZBE MataróDATEX2 v3" ,
+"ZBE RubíDATEX2 v3" ,
+"ZBE TarragonaDATEX2 v3" ,
+"ZBE TerrassaDATEX2 v3" ,
+"ZBE GironaDATEX2 v3" 
+)
+
+```
+
+## 4. Corrección de nombres
+
+```{r}
+df <- tibble(raw = zbe_list) |>
+  mutate(
+    # 1. Limpieza estándar (Prefijos/Sufijos y Title Case)
+    name = str_remove(raw, "(?i)DATEX2 ?v?3$"),
+    name = str_remove(name, "^ZBE\\s+"),
+    name = str_squish(name),
+    name = str_to_title(name),
+    
+    # 2. Creación del name_xml con las reglas restrictivas
+    name_xml = name |> 
+      # Paso A: Protección de la 'ñ'
+      str_replace_all("ñ", "___n___") |> 
+      str_replace_all("Ñ", "___N___") |>
+      
+      # Paso B: Quitar tildes (á, é, í, ó, ú...)
+      stringi::stri_trans_general("Latin-ASCII") |> 
+      
+      # Paso C: Quitar TODOS los guiones y TODOS los espacios
+      str_replace_all("-", "") |> 
+      str_replace_all(" ", "") |> 
+      
+      # Paso D: Restaurar la 'ñ'
+      str_replace_all("___n___", "ñ") |> 
+      str_replace_all("___N___", "Ñ") |>
+      
+      # Paso E: REGLA DE EXCEPCIÓN - Reinsertar guion solo en Donostia
+      str_replace_all("DonostiaSanSebastian", "Donostia-SanSebastian")
+  )
+
+# Comprobación de los casos mencionados
+df |> 
+  filter(str_detect(name, "Donostia|Sevilla|Vitoria|Coruña")) |> 
+  select(name, name_xml)
+```
+
+
+## 5. Crear las url
+
+```{r}
+df <- df |>
+  mutate(
+    url = paste0(
+      "https://infocar.dgt.es/datex2/v3/dgt/zbe/ControledZonePublication/",
+      name_xml,
+      ".xml"
+    )
+  ) |>
+  select(raw, name, name_xml, url)
+
+```
+
+## 6. Extracción de los mapas de ZBE
+
+```{r}
+
+# 1. Definir la función de extracción basada en tu código
+extract_zbe_sf <- function(target_url, city_name) {
+  tryCatch({
+    # Leer XML
+    xml_data <- read_xml(target_url)
+    
+    # Extraer nodos
+    lat_nodes <- xml_find_all(xml_data, ".//*[contains(local-name(), 'latitude')]")
+    lon_nodes <- xml_find_all(xml_data, ".//*[contains(local-name(), 'longitude')]")
+    
+    # Crear tabla de coordenadas
+    coords <- tibble(
+      lat = as.numeric(xml_text(lat_nodes)),
+      lon = as.numeric(xml_text(lon_nodes))
+    )
+    
+    # Cerrar el polígono si el primer y último punto no son iguales
+    if (!all(coords[1, ] == coords[nrow(coords), ])) {
+      coords <- bind_rows(coords, coords[1, ])
+    }
+    
+    # Crear matriz y geometría
+    coords_matrix <- coords |> select(lon, lat) |> as.matrix()
+    
+    poly <- st_polygon(list(coords_matrix))
+    
+    # Devolver objeto sf con el nombre de la ciudad
+    return(st_sf(name = city_name, geometry = st_sfc(poly, crs = 4326)))
+    
+  }, error = function(e) {
+    message(paste("Error procesando:", city_name, "-", e$message))
+    return(NULL)
+  })
+}
+
+```
+
+
+```{r}
+# 1. Aplicar la función a todo el dataframe
+zbe_results <- df |>
+  mutate(
+    sf_data = map2(url, name, ~extract_zbe_sf(.x, .y))
+  )
+```
+
+```{r}
+# 2. Consolidar en un único objeto sf
+# Ahora usamos 'sf_data' que es el nombre que definimos arriba
+final_zbe_sf <- zbe_results |>
+  filter(!map_lgl(sf_data, is.null)) |> 
+  pull(sf_data) |>
+  bind_rows()
+```
+
+
+
+```{r}
+# 3. Ver qué municipios han fallado (como Terrassa)
+fallidos <- zbe_results |> 
+  filter(map_lgl(sf_data, is.null)) |> 
+  select(name, url)
+
+print(paste("Municipios procesados con éxito:", nrow(final_zbe_sf)))
+print(fallidos)
+```
+
+
+```{r}
+mapview(final_zbe_sf, zcol = "name")
+
+
+```
+
+
+## 7. Guardar los mapas de las ZBE
+
+### 7.1. Guardar como gpkg de una capa
+
+```{r}
+# 1. Definir la ruta usando here()
+# Nota: here() empieza en la raíz del proyecto. 
+# Si tu carpeta está dos niveles arriba, nos aseguramos de construirla bien:
+path_ZBE <- here("../../Zonas_Bajas_Emisiones")
+
+# 2. Crear el directorio si no existe (preventivo)
+if (!dir.exists(path_ZBE)) {
+  dir.create(path_ZBE, recursive = TRUE)
+}
+
+# 3. Definir la ruta completa del archivo
+file_path <- file.path(path_ZBE, "ZBE.gpkg")
+
+# 4. Guardar el objeto sf
+# delete_dsn = TRUE permite sobrescribir el archivo si ya existe
+st_write(
+  final_zbe_sf, 
+  dsn = file_path, 
+  layer = "ZBE_Localidades",
+  delete_dsn = TRUE
+)
+
+message(paste("Archivo guardado exitosamente en:", file_path))
+```
+
+
+
+
+### 7.2. Guardar como gpkg con tantas capas como mapas obtenidos
+
+```{r}
+# 1. Configurar rutas
+path_ZBE <- here("../../Zonas_Bajas_Emisiones")
+if (!dir.exists(path_ZBE)) dir.create(path_ZBE, recursive = TRUE)
+
+file_path_ind <- file.path(path_ZBE, "ZBE_individual.gpkg")
+
+# 2. Eliminar el archivo si ya existe para evitar duplicar capas al re-ejecutar
+if (file.exists(file_path_ind)) file.remove(file_path_ind)
+
+# 3. Guardar cada registro como una capa individual
+# Usamos pwalk para iterar sobre los datos y los nombres simultáneamente
+pwalk(list(final_zbe_sf$geometry, final_zbe_sf$name), function(geom, n) {
+  
+  # Convertir la fila actual en un objeto sf limpio
+  single_sf <- st_sf(name = n, geometry = st_sfc(geom, crs = 4326))
+  
+  # Escribir en el GPKG especificando la capa
+  # append = TRUE es clave para ir añadiendo capas al mismo archivo
+  st_write(
+    single_sf, 
+    dsn = file_path_ind, 
+    layer = n, 
+    append = TRUE,
+    quiet = TRUE
+  )
+})
+
+message(paste("Archivo con capas individuales guardado en:", file_path_ind))
+```
+
+
+

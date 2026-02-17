@@ -1,0 +1,124 @@
+---
+title: "Modelo descarga ZBE"
+author: "Gisarte"
+params: 
+  aoi: "Palma"
+---
+
+## 1. Recursos
+
+Dirección General de Tráfico: [DGT](https://nap.dgt.es/).
+
+Zonas de Bajas Emisiones: [ZBE](https://nap.dgt.es/dataset/zonas-de-bajas-emisiones).
+
+## 2. Cargar librerías
+
+```{r}
+library(xml2)
+
+library(dplyr)
+library(purrr)
+library(sf)
+
+library(mapview)
+```
+
+## 3. Leer el archivo directamente desde la URL de la DGT
+
+
+```{r}
+# 1. Leer el archivo directamente desde la URL de la DGT
+url_aoi <- "https://infocar.dgt.es/datex2/v3/dgt/zbe/ControledZonePublication/Palma.xml"
+xml_data <- read_xml(url_aoi)
+
+```
+## 4. Extacción de coordenadas
+
+```{r}
+lat_nodes <- xml_find_all(
+  xml_data,
+  ".//*[contains(local-name(), 'latitude')]"
+)
+
+lon_nodes <- xml_find_all(
+  xml_data,
+  ".//*[contains(local-name(), 'longitude')]"
+)
+
+coords <- tibble(
+  lat = as.numeric(xml_text(lat_nodes)),
+  lon = as.numeric(xml_text(lon_nodes))
+)
+
+```
+
+```{r}
+coords[1, ] == coords[nrow(coords), ]
+
+# Si no coinciden:
+# coords <- bind_rows(coords, coords[1, ])
+
+
+```
+
+### 4.1. Crear matriz lon/lat
+
+```{r}
+coords_matrix <- coords |>
+  select(lon, lat) |>
+  as.matrix()
+
+
+```
+
+### 4.2. Crear objeto sf
+
+```{r}
+zbe_aoi_sf <- st_sf(
+  geometry = st_sfc(
+    st_polygon(list(coords_matrix)),
+    crs = 4326
+  )
+)
+
+```
+
+Veriicar
+```{r}
+st_is_valid(zbe_aoi_sf)
+```
+## 5. Visualización
+
+```{r}
+mapview(zbe_aoi_sf)
+```
+
+
+## 6. Exportar
+
+```{r}
+path_ZBE <- "../../Zonas_Bajas_Emisiones/zbe_"
+```
+
+
+```{r}
+st_write(zbe_aoi_sf, 
+         paste0(path_ZBE,
+                params$aoi,
+                ".gpkg"),
+         delete_dsn = TRUE)
+
+```
+
+
+
+
+```{r}
+st_write(zbe_aoi_sf, 
+         "../../Zonas_Bajas_Emisiones/zbe_palma.gpkg",
+         delete_dsn = TRUE)
+
+```
+
+
+

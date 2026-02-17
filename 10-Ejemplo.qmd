@@ -34,6 +34,36 @@ metadata <- spod_available_data(ver = 2) # for version 2 of the data
 metadata
 ```
 
+### Distritos
+```{r}
+distritos <- spod_get_zones("distritos", ver = 2)
+distritos_wgs84 <- distritos |>
+  sf::st_simplify(dTolerance = 200) |>
+  sf::st_transform(4326)
+
+plot(sf::st_geometry(distritos_wgs84))
+```
+```{r}
+Basauri <- distritos |> filter (name == c("Basauri"))
+
+
+```
+
+Area_bilbao
+
+```{r}
+Gau_bilbao <- distritos |> filter (luas_mitma == c("GAU Bilbao"))
+```
+
+```{r}
+Gau_bilbao_wgs84 <- Gau_bilbao |>
+  sf::st_simplify(dTolerance = 200) |>
+  sf::st_transform(4326)
+
+plot(sf::st_geometry(Gau_bilbao_wgs84))
+```
+
+
 ## Ejemplo simple
 
 

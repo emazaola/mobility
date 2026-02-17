@@ -1,0 +1,141 @@
+# Basauri GAU Bilbao
+
+## Objetivo
+
+El objetivo de este ejemplo es analizar el flujo de viajes a Basauri desde otros municipios del GAU Bilbao
+
+## Configuración
+
+
+
+### Cargar librerías
+
+```{r}
+# library(flowmapper)
+library(spanishoddata)
+library(tidyverse)
+library(sf)
+
+library(duckdb)
+```
+
+### Data directory
+```{r}
+spod_set_data_dir(data_dir = "../spanish_od_data/")
+```
+
+
+## Analysing the data using DuckDB database
+
+### Convert to DuckDB
+
+```{r}
+dates_3 <- c(start = "2023-02-14", end = "2023-02-17")
+
+spod_download(type = "od",
+              zones = "municipalities",
+              dates = dates_3)
+```
+
+```{r}
+db_3 <- spod_convert(type = "od",
+                     zones = "municipalities", #zones = "distr",
+                     dates = "cached_v2",
+                     save_format = "duckdb",
+                     overwrite = TRUE)
+
+db_3 # check the path to the saved `DuckDB` database
+```
+
+### Load the converted DuckDB
+
+```{r}
+my_db_3 <- spod_connect(db_3)
+```
+
+```{r}
+head(my_db_3)
+```
+
+```{r}
+colnames(my_db_3)
+```
+
+
+```{r}
+ provincias <- my_db_3  |> 
+  distinct(residence_province_name)  |> 
+  arrange(residence_province_name)
+```
+
+
+
+```{r}
+ provincias <- my_db_3  |> 
+  distinct(id_destination)  |> 
+  arrange(id_destination)
+```
+
+
+
+
+
+```{r}
+bizkaia <-  my_db_3 |> 
+  dplyr::filter(residence_province_name =="Bizkaia")
+bizkaia 
+```
+
+
+```{r}
+bizkaia |> 
+  distinct(id_destination)  |> 
+  arrange(id_destination)
+```
+
+
+```{r}
+colnames(my_od_data_2)
+
+unique(my_od_data_2$residence_province_name)
+
+my_od_data_2 |> dplyr::filter(year=="2023" & residence_province_name =="Madrid")
+
+my_od_data_2 |> dplyr::filter(residence_province_name =="Madrid")
+
+my_od_data_2 |> dplyr::select(residence_province_name) |> unique()
+
+dplyr::pull(my_od_data_2$residence_province_name)
+
+a <- my_od_data_2$residence_province_name
+
+
+
+
+```
+
+```{r}
+my_od_data_2  |> 
+  distinct(residence_province_name)  |> 
+  arrange(residence_province_name)
+```
+
+
+```{r}
+ my_od_data_2 |> 
+  dplyr::filter(residence_province_name =="Bizkaia")
+```
+
+
+
+
+
+
+After finishing working with my_od_data_2 we advise that you “disconnect” this data using:
+
+```{r}
+spod_disconnect(my_od_data_2)
+```
+
+
+
