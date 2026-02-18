@@ -2,7 +2,7 @@
 title: "Modelo descarga ZBE"
 author: "Gisarte"
 params: 
-  aoi: "Palma"
+  aoi: "lleida"
 ---
 
 ## 1. Recursos
@@ -28,7 +28,7 @@ library(mapview)
 
 ```{r}
 # 1. Leer el archivo directamente desde la URL de la DGT
-url_aoi <- "https://infocar.dgt.es/datex2/v3/dgt/zbe/ControledZonePublication/Palma.xml"
+url_aoi <- "https://infocar.dgt.es/datex2/v3/dgt/zbe/ControledZonePublication/Lleida.xml"
 xml_data <- read_xml(url_aoi)
 
 ```
@@ -56,7 +56,7 @@ coords <- tibble(
 coords[1, ] == coords[nrow(coords), ]
 
 # Si no coinciden:
-# coords <- bind_rows(coords, coords[1, ])
+ coords <- bind_rows(coords, coords[1, ])
 
 
 ```

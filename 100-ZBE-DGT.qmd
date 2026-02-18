@@ -209,7 +209,35 @@ mapview(final_zbe_sf, zcol = "name")
 
 ## 7. Guardar los mapas de las ZBE
 
-### 7.1. Guardar como gpkg de una capa
+### 7.1. Guardar como geojson de una capa
+
+```{r}
+# 1. Definir la ruta usando here()
+# Nota: here() empieza en la raíz del proyecto. 
+# Si tu carpeta está dos niveles arriba, nos aseguramos de construirla bien:
+path_ZBE <- here("../../Zonas_Bajas_Emisiones")
+
+# 2. Crear el directorio si no existe (preventivo)
+if (!dir.exists(path_ZBE)) {
+  dir.create(path_ZBE, recursive = TRUE)
+}
+
+# 3. Definir la ruta completa del archivo
+file_path <- file.path(path_ZBE, "ZBE.geojson")
+
+# 4. Guardar el objeto sf
+# delete_dsn = TRUE permite sobrescribir el archivo si ya existe
+st_write(
+  final_zbe_sf, 
+  dsn = file_path, 
+  layer = "ZBE_Localidades",
+  delete_dsn = TRUE
+)
+
+message(paste("Archivo guardado exitosamente en:", file_path))
+```
+
+### 7.2. Guardar como gpkg de una capa
 
 ```{r}
 # 1. Definir la ruta usando here()
@@ -240,7 +268,7 @@ message(paste("Archivo guardado exitosamente en:", file_path))
 
 
 
-### 7.2. Guardar como gpkg con tantas capas como mapas obtenidos
+### 7.3. Guardar como gpkg con tantas capas como mapas obtenidos
 
 ```{r}
 # 1. Configurar rutas
